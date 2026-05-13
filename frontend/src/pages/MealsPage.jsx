@@ -60,6 +60,14 @@ function MealsPage() {
     setFoods([]);
   }
 
+  async function deleteMeal(id) {
+  await fetch(`http://localhost:8080/api/meals/${id}`, {
+    method: "DELETE",
+  });
+
+  fetchMeals();
+}
+
   return (
     <div>
       <h1>Meals Page</h1>
@@ -138,9 +146,15 @@ function MealsPage() {
             </div>
           ))}
 
+          
+
           <p>
             Total: {meal.foods.reduce((sum, food) => sum + food.calories, 0)} kcal
           </p>
+
+            <button onClick={() => deleteMeal(meal.id)}>
+  Delete Meal
+</button>
         </div>
       ))}
     </div>

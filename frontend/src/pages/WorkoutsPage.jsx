@@ -109,6 +109,14 @@ useEffect(() => {
     setExercises([]);
   }
 
+  async function deleteWorkout(id) {
+  await fetch(`http://localhost:8080/api/workouts/${id}`, {
+    method: "DELETE",
+  });
+
+  fetchWorkouts();
+}
+
   return (
     <div>
       <h1>Workouts Page</h1>
@@ -223,8 +231,14 @@ useEffect(() => {
         {exercise.weightKg} kg
       </div>
     ))}
+    <br></br>
+    <button onClick={() => deleteWorkout(workout.id)}>
+  Delete Workout
+</button>
   </div>
 ))}
+
+
     </div>
   );
 }

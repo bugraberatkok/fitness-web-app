@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,4 +45,9 @@ public class DailyMealController {
 
         return dailyMealRepository.save(meal);
     }
+
+    @DeleteMapping("/{id}")
+public void deleteMeal(@PathVariable Long id) {
+    dailyMealRepository.deleteById(id);
+}
 }
