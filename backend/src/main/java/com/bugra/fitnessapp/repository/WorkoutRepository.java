@@ -1,12 +1,11 @@
 package com.bugra.fitnessapp.repository;
 
-import java.time.LocalDate;
-import java.util.List;
-
+import com.bugra.fitnessapp.entity.AppUser;
+import com.bugra.fitnessapp.entity.Workout;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.bugra.fitnessapp.entity.Workout;
+import java.util.List;
 
 public interface WorkoutRepository extends JpaRepository<Workout, Long> {
-    List<Workout> findByDate(LocalDate date);
+    List<Workout> findByUser(AppUser user);
 }

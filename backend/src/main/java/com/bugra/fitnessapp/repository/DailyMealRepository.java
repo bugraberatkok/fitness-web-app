@@ -1,12 +1,11 @@
 package com.bugra.fitnessapp.repository;
 
-import java.time.LocalDate;
-import java.util.List;
-
+import com.bugra.fitnessapp.entity.AppUser;
+import com.bugra.fitnessapp.entity.DailyMeal;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.bugra.fitnessapp.entity.DailyMeal;
+import java.util.List;
 
 public interface DailyMealRepository extends JpaRepository<DailyMeal, Long> {
-    List<DailyMeal> findByDate(LocalDate date);
+    List<DailyMeal> findByUser(AppUser user);
 }

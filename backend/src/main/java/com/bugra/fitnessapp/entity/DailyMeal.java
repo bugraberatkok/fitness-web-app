@@ -6,10 +6,16 @@ import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,4 +38,9 @@ public class DailyMeal {
 
     @OneToMany(mappedBy = "dailyMeal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FoodItem> foods = new ArrayList<>();
+
+    // Her öğün bir kullanıcıya aittir
+    @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private AppUser user;
 }

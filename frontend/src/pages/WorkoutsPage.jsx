@@ -1,244 +1,243 @@
 import { useEffect, useState } from "react";
-
+import { useAuth } from "../context/AuthContext";
+import { Plus, Trash2, Dumbbell, CalendarDays, CheckCircle2 } from "lucide-react";
 
 function WorkoutsPage() {
+  const { token } = useAuth(); // JWT token'ı al
+  
   const days = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
   ];
+  const trDays = {
+    "Monday": "Pzt", "Tuesday": "Sal", "Wednesday": "Çar", "Thursday": "Per", "Friday": "Cum", "Saturday": "Cmt", "Sunday": "Paz"
+  };
 
-  const todayIndex = new Date().getDay();
-  const convertedTodayIndex = todayIndex === 0 ? 6 : todayIndex - 1;
-
-  const [selectedDay, setSelectedDay] = useState(days[convertedTodayIndex]);
-
-  const [workoutName, setWorkoutName] = useState("");
-  const [durationMinutes, setDurationMinutes] = useState("");
-
-  const [exerciseName, setExerciseName] = useState("");
-  const [sets, setSets] = useState("");
-  const [reps, setReps] = useState("");
-  const [weightKg, setWeightKg] = useState("");
-
+  const [date, setDate] = useState("");
+  const [dayOfWeek, setDayOfWeek] = useState("Monday");
   const [exercises, setExercises] = useState([]);
+
+  // Geçici form state'i
+  const [currentExName, setCurrentExName] = useState("");
+  const [currentSets, setCurrentSets] = useState("");
+  const [currentReps, setCurrentReps] = useState("");
+  const [currentWeight, setCurrentWeight] = useState("");
 
   const [workouts, setWorkouts] = useState([]);
 
-  function getDateForSelectedDay() {
-    const today = new Date();
-    const currentDayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
-    const selectedDayIndex = days.indexOf(selectedDay);
-
-    const difference = selectedDayIndex - currentDayIndex;
-
-    const selectedDate = new Date(today);
-    selectedDate.setDate(today.getDate() + difference);
-
-    return selectedDate.toISOString().split("T")[0];
-  }
-
   async function fetchWorkouts() {
-  const response = await fetch("http://localhost:8080/api/workouts");
-  const data = await response.json();
-  setWorkouts(data);
-}
-
-useEffect(() => {
-  fetchWorkouts();
-}, []);
-
-  function addExercise() {
-  if (!exerciseName || !sets || !reps || !weightKg) {
-    alert("Please fill all exercise fields.");
-    return;
+    const response = await fetch("http://localhost:8080/api/workouts", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    setWorkouts(data);
   }
 
-  if (Number(sets) <= 0 || Number(reps) <= 0 || Number(weightKg) < 0) {
-    alert("Sets and reps must be greater than 0. Weight cannot be negative.");
-    return;
+  useEffect(() => {
+    if (token) fetchWorkouts();
+  }, [token]);
+
+  function handleAddExercise() {
+    if (!currentExName || !currentSets || !currentReps || !currentWeight) return;
+    setExercises([
+      ...exercises,
+      {
+        name: currentExName,
+        sets: parseInt(currentSets),
+        reps: parseInt(currentReps),
+        weightKg: parseFloat(currentWeight),
+      },
+    ]);
+    setCurrentExName("");
+    setCurrentSets("");
+    setCurrentReps("");
+    setCurrentWeight("");
   }
 
-  const newExercise = {
-    name: exerciseName,
-    sets: Number(sets),
-    reps: Number(reps),
-    weightKg: Number(weightKg),
-  };
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (exercises.length === 0 || !date) return;
 
-  setExercises([...exercises, newExercise]);
-
-  setExerciseName("");
-  setSets("");
-  setReps("");
-  setWeightKg("");
-}
-
-  async function handleAddWorkout() {
-
-    if (!workoutName || !durationMinutes || exercises.length === 0) {
-    alert("Please enter workout name, duration, and at least one exercise.");
-    return;
-  }
-
-
-      const workoutData = {
-      date: getDateForSelectedDay(),
-      name: workoutName,
-      durationMinutes: Number(durationMinutes),
+    const workoutData = {
+      date: date,
+      name: "Antrenman",
+      durationMinutes: 45,
       exercises: exercises,
     };
 
-    const response = await fetch("http://localhost:8080/api/workouts", {
+    await fetch("http://localhost:8080/api/workouts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(workoutData),
     });
 
-    const savedWorkout = await response.json();
-    console.log(savedWorkout);
-    fetchWorkouts();
-    setWorkoutName("");
-    setDurationMinutes("");
+    setDate("");
     setExercises([]);
+    fetchWorkouts();
   }
 
   async function deleteWorkout(id) {
-  await fetch(`http://localhost:8080/api/workouts/${id}`, {
-    method: "DELETE",
-  });
+    await fetch(`http://localhost:8080/api/workouts/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    fetchWorkouts();
+  }
 
-  fetchWorkouts();
-}
+  // Hangi günlerde idman var?
+  const workedOutDays = [...new Set(workouts.map(w => new Date(w.date).toLocaleDateString("en-US", { weekday: 'long' })))];
+  const currentDayName = new Date().toLocaleDateString("en-US", { weekday: 'long' });
 
   return (
-    <div>
-      <h1>Workouts Page</h1>
+    <div className="fade-in">
+      <div className="page-header">
+        <h1 className="page-title">Antrenman Programım</h1>
+        <p className="page-subtitle">Ağırlıkları artır, sınırları zorla, gelişimi hisset.</p>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        {days.map((day) => (
-          <button
-            key={day}
-            onClick={() => setSelectedDay(day)}
-            style={{
-              padding: "10px",
-              backgroundColor: selectedDay === day ? "orange" : "white",
-            }}
-          >
-            {day}
-          </button>
-        ))}
-      </div>
-
-      <h2>Selected Day: {selectedDay}</h2>
-      <p>Date: {getDateForSelectedDay()}</p>
-
-      <h2>Add Workout</h2>
-
-      <input
-        type="text"
-        placeholder="Workout Name"
-        value={workoutName}
-        onChange={(e) => setWorkoutName(e.target.value)}
-      />
-
-      <br /><br />
-
-      <input
-        type="number"
-        placeholder="Duration Minutes"
-        value={durationMinutes}
-        onChange={(e) => setDurationMinutes(e.target.value)}
-      />
-
-      <h3>Add Exercise</h3>
-
-      <input
-        type="text"
-        placeholder="Exercise Name"
-        value={exerciseName}
-        onChange={(e) => setExerciseName(e.target.value)}
-      />
-
-      <br /><br />
-
-      <input
-        type="number"
-        placeholder="Sets"
-        value={sets}
-        onChange={(e) => setSets(e.target.value)}
-      />
-
-      <br /><br />
-
-      <input
-        type="number"
-        placeholder="Reps"
-        value={reps}
-        onChange={(e) => setReps(e.target.value)}
-      />
-
-      <br /><br />
-
-      <input
-        type="number"
-        placeholder="Weight KG"
-        value={weightKg}
-        onChange={(e) => setWeightKg(e.target.value)}
-      />
-
-      <br /><br />
-
-      <button onClick={addExercise}>Add Exercise</button>
-
-      <h3>Exercises to Add</h3>
-
-      {exercises.map((exercise, index) => (
-        <div key={index}>
-          {exercise.name} - {exercise.sets} sets x {exercise.reps} reps -{" "}
-          {exercise.weightKg} kg
+        {/* WEEK GRID OVERVIEW */}
+        <div className="card fade-in-2" style={{ marginTop: "20px", padding: "16px" }}>
+          <div className="section-hd" style={{ marginBottom: "0" }}>
+            <div className="section-hd-title" style={{ fontSize: "13px" }}><CalendarDays size={14} style={{ verticalAlign: "middle", marginRight: "6px" }} /> Haftalık Görünüm</div>
+          </div>
+          <div className="week-grid">
+            {days.map(d => {
+              const isDone = workedOutDays.includes(d);
+              const isToday = currentDayName === d;
+              return (
+                <div key={d} className="week-day">
+                  <div className={`week-day-bar ${isDone ? 'done' : 'empty'} ${isToday ? 'today' : ''}`} style={isToday ? { border: '2px solid var(--green-400)' } : {}}>
+                    {isDone && <CheckCircle2 size={14} />}
+                  </div>
+                  <div className="week-day-lbl" style={isToday ? { color: 'var(--green-400)', fontWeight: 'bold' } : {}}>{trDays[d]}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      ))}
-
-      <br />
-
-      <button onClick={handleAddWorkout}>Add Workout</button>
-
-      <h2>Saved Workouts</h2>
-
-{workouts.map((workout) => (
-  <div
-    key={workout.id}
-    style={{
-      border: "1px solid gray",
-      padding: "10px",
-      marginBottom: "10px",
-    }}
-  >
-    <h3>{workout.name}</h3>
-    <p>Date: {workout.date}</p>
-    <p>Duration: {workout.durationMinutes} minutes</p>
-
-    {workout.exercises.map((exercise) => (
-      <div key={exercise.id}>
-        {exercise.name} - {exercise.sets} sets x {exercise.reps} reps -{" "}
-        {exercise.weightKg} kg
       </div>
-    ))}
-    <br></br>
-    <button onClick={() => deleteWorkout(workout.id)}>
-  Delete Workout
-</button>
-  </div>
-))}
 
+      <div className="dashboard-grid">
+        {/* FORM BÖLÜMÜ */}
+        <div className="fade-in-2">
+          <div className="form-section">
+            <h2 className="section-hd-title" style={{ marginBottom: "20px" }}>
+              <Plus size={18} style={{ verticalAlign: "middle", marginRight: "8px", color: "var(--lime-400)" }} />
+              Yeni Antrenman
+            </h2>
 
+            <form onSubmit={handleSubmit} className="form-grid">
+              
+              <div className="form-group full" style={{ display: 'none' }}>
+                <label className="form-label">Antrenman Günü</label>
+                <div className="day-selector">
+                  {days.map(d => (
+                    <button
+                      key={d} type="button"
+                      className={`day-btn ${dayOfWeek === d ? 'active' : ''}`}
+                      onClick={() => setDayOfWeek(d)}
+                    >
+                      {trDays[d]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group full">
+                <label className="form-label">Tarih</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group full" style={{ borderTop: "1px solid var(--border-sub)", paddingTop: "15px", marginTop: "5px" }}>
+                <label className="form-label">Hareket Ekle</label>
+                <div className="form-grid g2" style={{ marginBottom: "10px" }}>
+                  <div className="form-group full">
+                    <input
+                      type="text" className="form-input" placeholder="Hareket (Bench Press)"
+                      value={currentExName} onChange={(e) => setCurrentExName(e.target.value)}
+                    />
+                  </div>
+                  <input
+                    type="number" className="form-input" placeholder="Set"
+                    value={currentSets} onChange={(e) => setCurrentSets(e.target.value)}
+                  />
+                  <input
+                    type="number" className="form-input" placeholder="Tekrar"
+                    value={currentReps} onChange={(e) => setCurrentReps(e.target.value)}
+                  />
+                  <input
+                    type="number" step="0.5" className="form-input" placeholder="KG"
+                    value={currentWeight} onChange={(e) => setCurrentWeight(e.target.value)}
+                  />
+                  <button type="button" onClick={handleAddExercise} className="btn btn-secondary">Ekle</button>
+                </div>
+              </div>
+
+              {exercises.length > 0 && (
+                <div className="form-group full">
+                  <div className="staged-list">
+                    {exercises.map((ex, i) => (
+                      <div key={i} className="staged-item">
+                        <span className="staged-name">{ex.name}</span>
+                        <span className="staged-det">{ex.sets}x{ex.reps} • {ex.weightKg}kg</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="form-group full" style={{ marginTop: "10px" }}>
+                <button type="submit" className="btn btn-primary" style={{ width: "100%", background: "linear-gradient(135deg, var(--lime-400), var(--green-600))", color: "#000" }}>
+                  Antrenmanı Kaydet
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* LİSTE BÖLÜMÜ */}
+        <div className="fade-in-3" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {workouts.length === 0 ? (
+            <div className="empty-state">
+              <Dumbbell className="empty-icon" />
+              <div className="empty-text">Henüz kaydedilmiş bir antrenman bulunmuyor.</div>
+            </div>
+          ) : (
+            workouts.map((workout) => (
+              <div key={workout.id} className="workout-card">
+                <div className="workout-card-hd">
+                  <div>
+                    <h3 className="workout-name">{trDays[new Date(workout.date).toLocaleDateString("en-US", { weekday: 'long' })]} Antrenmanı</h3>
+                    <div className="workout-badges">
+                      <div className="w-badge"><CalendarDays size={12}/> {workout.date}</div>
+                      <div className="w-badge" style={{ color: "var(--lime-400)" }}><Dumbbell size={12}/> {workout.exercises.length} Hareket</div>
+                    </div>
+                  </div>
+                  <button onClick={() => deleteWorkout(workout.id)} className="btn btn-danger">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                
+                <div className="ex-list">
+                  {workout.exercises.map((ex) => (
+                    <div key={ex.id} className="ex-row">
+                      <span className="ex-name">{ex.name}</span>
+                      <span className="ex-detail">{ex.sets} set × {ex.reps} tekrar <span style={{ color: "var(--text-primary)", fontWeight: 600, marginLeft: "6px" }}>{ex.weightKg} kg</span></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }

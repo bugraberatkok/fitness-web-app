@@ -1,44 +1,40 @@
 package com.bugra.fitnessapp.controller;
 
-import java.time.LocalDate;
-import java.util.List;
-
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import com.bugra.fitnessapp.entity.AppUser;
 import com.bugra.fitnessapp.entity.DailyMeal;
 import com.bugra.fitnessapp.entity.FoodItem;
+import com.bugra.fitnessapp.repository.AppUserRepository;
 import com.bugra.fitnessapp.repository.DailyMealRepository;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/meals")
-@CrossOrigin(origins = "http://localhost:5173")
 public class DailyMealController {
 
     private final DailyMealRepository dailyMealRepository;
+    private final AppUserRepository appUserRepository;
 
-    public DailyMealController(DailyMealRepository dailyMealRepository) {
+    public DailyMealController(DailyMealRepository dailyMealRepository, AppUserRepository appUserRepository) {
         this.dailyMealRepository = dailyMealRepository;
+        this.appUserRepository = appUserRepository;
     }
 
     @GetMapping
-    public List<DailyMeal> getAllMeals() {
-        return dailyMealRepository.findAll();
-    }
-
-    @GetMapping("/date/{date}")
-    public List<DailyMeal> getMealsByDate(@PathVariable LocalDate date) {
-        return dailyMealRepository.findByDate(date);
+    public List<DailyMeal> getAllMeals(@AuthenticationPrincipal UserDetails userDetails) {
+        AppUser user = appUserRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        return dailyMealRepository.findByUser(user);
     }
 
     @PostMapping
-    public DailyMeal createMeal(@RequestBody DailyMeal meal) {
+    public DailyMeal createMeal(@RequestBody DailyMeal meal,
+                                @AuthenticationPrincipal UserDetails userDetails) {
+        AppUser user = appUserRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        meal.setUser(user);
+
         for (FoodItem food : meal.getFoods()) {
             food.setDailyMeal(meal);
         }
@@ -47,7 +43,12 @@ public class DailyMealController {
     }
 
     @DeleteMapping("/{id}")
-public void deleteMeal(@PathVariable Long id) {
-    dailyMealRepository.deleteById(id);
-}
+    public void deleteMeal(@PathVariable Long id,
+                           @AuthenticationPrincipal UserDetails userDetails) {
+        AppUser user = appUserRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        DailyMeal meal = dailyMealRepository.findById(id).orElseThrow();
+        if (meal.getUser().getId().equals(user.getId())) {
+            dailyMealRepository.deleteById(id);
+        }
+    }
 }
