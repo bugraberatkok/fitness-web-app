@@ -2,7 +2,8 @@
 
 A modern, responsive, and secure full-stack web application for tracking daily nutrition and workouts. Designed with a sleek glassmorphism UI, this application allows users to monitor their calorie intake, log their exercises, and stay on top of their fitness goals through a comprehensive dashboard.
 
-![Dashboard Preview](https://via.placeholder.com/1000x500.png?text=Add+Your+Dashboard+Screenshot+Here)
+<img width="1876" height="921" alt="Adsız" src="https://github.com/user-attachments/assets/9945c5ea-35ce-4830-9d83-b0799d092b13" />
+
 
 ## 🚀 Features
 
