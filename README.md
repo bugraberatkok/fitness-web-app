@@ -75,4 +75,4 @@ The project is configured to run effortlessly out-of-the-box thanks to the embed
 
 ## 👨‍💻 Developer
 
-Developed by **[Your Name/Username]** - Open to backend/fullstack opportunities!
+Developed by **Buğra Berat Kök**
