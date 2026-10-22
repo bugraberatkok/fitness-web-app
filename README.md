@@ -48,6 +48,10 @@ The project is configured to run effortlessly out-of-the-box thanks to the embed
    mvn spring-boot:run
    ```
    *(The server will start on `http://localhost:8080`. The H2 database file will automatically be created in the `backend/data/` folder).*
+3. *(Optional)* Set a JWT signing key so sessions survive restarts. Without it, a random key is generated on each start:
+   ```bash
+   export JWT_SECRET=$(openssl rand -hex 32)
+   ```
 
 ### 2. Running the Frontend (React/Vite)
 

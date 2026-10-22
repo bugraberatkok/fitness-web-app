@@ -2,9 +2,12 @@ package com.bugra.fitnessapp.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
@@ -13,16 +16,26 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // application.properties'den alınan secret key ve süre
-    @Value("${app.jwt.secret}")
-    private String jwtSecret;
+    private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
 
-    @Value("${app.jwt.expiration-ms}")
-    private long jwtExpirationMs;
+    private final Key signingKey;
+    private final long jwtExpirationMs;
 
-    // Secret key'den HMAC-SHA imzalama anahtarı üretir
+    // Secret key JWT_SECRET ortam değişkeninden gelir (bkz. application.properties).
+    // Boşsa rastgele bir HMAC-SHA anahtarı üretilir; uygulama yeniden başlayınca eski token'lar geçersiz olur.
+    public JwtUtil(@Value("${app.jwt.secret}") String jwtSecret,
+                   @Value("${app.jwt.expiration-ms}") long jwtExpirationMs) {
+        if (jwtSecret.isBlank()) {
+            log.warn("JWT_SECRET is not set; using a random signing key. Sessions will not survive a restart.");
+            this.signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        } else {
+            this.signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        }
+        this.jwtExpirationMs = jwtExpirationMs;
+    }
+
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        return signingKey;
     }
 
     // Kullanıcı email'inden JWT token üretir
